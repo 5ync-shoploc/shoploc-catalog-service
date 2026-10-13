@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   ci:
-    uses: 5ync-shoploc/shoploc-ci/.github/workflows/maven-ci.yml@develop
+    uses: 5ync-shoploc/shoploc-ci-cd/.github/workflows/maven-ci.yml@develop
 
     with:
       sonar-project-key: "5ync-shoploc_shoploc-catalog-service"
