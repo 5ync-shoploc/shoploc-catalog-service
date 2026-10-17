@@ -22,7 +22,7 @@ class ProductControllerTest {
         var pageable = PageRequest.of(0, 10);
         var product = new Product();
         product.setName("Laptop");
-        product.setPrice(899.99);
+        product.setPrice(879.99);
 
         Page<Product> page =
                 new PageImpl<>(List.of(product), pageable, 1);
