@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: shoploc-catalog-service
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/shoploc-db
+    username: postgres
+    password: aymenmessikh2002
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
