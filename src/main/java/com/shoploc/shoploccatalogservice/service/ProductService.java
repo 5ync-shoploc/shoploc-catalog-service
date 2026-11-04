@@ -31,4 +31,8 @@ public class ProductService {
 
         return repository.save(product);
     }
+
+    public Page<Product> getMerchantProducts(String merchantId, Pageable pageable) {
+        return repository.findByMerchantId(merchantId, pageable);
+    }
 }

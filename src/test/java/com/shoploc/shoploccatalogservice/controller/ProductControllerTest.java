@@ -95,4 +95,43 @@ class ProductControllerTest {
         assertEquals(HttpStatus.UNAUTHORIZED, ex.getStatusCode());
         verify(service, never()).createProduct(any(), any());
     }
+
+    @Test
+    void getMyProducts_asCommercant_shouldReturnOnlyMerchantProducts() {
+        ProductService service = mock(ProductService.class);
+        ProductController controller = new ProductController(service);
+
+        var pageable = PageRequest.of(0, 10);
+        var product = Product.builder()
+                .id(1L)
+                .name("Baguette")
+                .stock(30)
+                .merchantId("merchant-123")
+                .build();
+
+        Page<Product> expectedPage = new PageImpl<>(List.of(product), pageable, 1);
+        when(service.getMerchantProducts("merchant-123", pageable)).thenReturn(expectedPage);
+
+        Page<Product> result = controller.getMyProducts("merchant-123", "COMMERCANT", pageable);
+
+        assertEquals(1, result.getTotalElements());
+        assertEquals("Baguette", result.getContent().get(0).getName());
+        assertEquals(30, result.getContent().get(0).getStock());
+        verify(service).getMerchantProducts("merchant-123", pageable);
+    }
+
+    @Test
+    void getMyProducts_asClient_shouldThrowForbidden() {
+        ProductService service = mock(ProductService.class);
+        ProductController controller = new ProductController(service);
+
+        var pageable = PageRequest.of(0, 10);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
+                controller.getMyProducts("client-456", "CLIENT", pageable)
+        );
+
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        verify(service, never()).getMerchantProducts(any(), any());
+    }
 }

@@ -43,4 +43,21 @@ public class ProductController {
         Product created = service.createProduct(request, userId);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
+
+    @GetMapping("/my-products")
+    public Page<Product> getMyProducts(
+            @RequestHeader(value = "X-User-Id", required = false) String userId,
+            @RequestHeader(value = "X-User-Role", required = false) String userRole,
+            Pageable pageable
+    ) {
+        if (userId == null || userId.isBlank() || userRole == null || userRole.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentification requise");
+        }
+
+        if (!"COMMERCANT".equalsIgnoreCase(userRole)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Seul le commerçant peut consulter ses articles");
+        }
+
+        return service.getMerchantProducts(userId, pageable);
+    }
 }
