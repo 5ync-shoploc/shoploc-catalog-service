@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import com.shoploc.shoploccatalogservice.dto.UpdateProductRequest;
 
 @RestController
 @RequestMapping("/api/products")
@@ -59,5 +60,24 @@ public class ProductController {
         }
 
         return service.getMerchantProducts(userId, pageable);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Product> updateProduct(
+            @PathVariable Long id,
+            @RequestHeader(value = "X-User-Id", required = false) String userId,
+            @RequestHeader(value = "X-User-Role", required = false) String userRole,
+            @Valid @RequestBody UpdateProductRequest request
+    ) {
+        if (userId == null || userId.isBlank() || userRole == null || userRole.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentification requise");
+        }
+
+        if (!"COMMERCANT".equalsIgnoreCase(userRole)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Seul le commerçant peut modifier un article");
+        }
+
+        Product updated = service.updateProduct(id, request, userId);
+        return ResponseEntity.ok(updated);
     }
 }

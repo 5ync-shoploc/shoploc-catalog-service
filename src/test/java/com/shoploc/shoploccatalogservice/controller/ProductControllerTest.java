@@ -134,4 +134,48 @@ class ProductControllerTest {
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
         verify(service, never()).getMerchantProducts(any(), any());
     }
+
+    @Test
+    void updateProduct_asCommercantOwner_shouldReturnUpdatedProduct() {
+        ProductService service = mock(ProductService.class);
+        ProductController controller = new ProductController(service);
+
+        var request = new com.shoploc.shoploccatalogservice.dto.UpdateProductRequest(
+                "Baguette Modifiée", "Traditionnelle", BigDecimal.valueOf(1.40), 20
+        );
+        var updatedProduct = Product.builder()
+                .id(1L)
+                .name("Baguette Modifiée")
+                .description("Traditionnelle")
+                .price(BigDecimal.valueOf(1.40))
+                .stock(20)
+                .merchantId("merchant-123")
+                .build();
+
+        when(service.updateProduct(1L, request, "merchant-123")).thenReturn(updatedProduct);
+
+        ResponseEntity<Product> response = controller.updateProduct(1L, "merchant-123", "COMMERCANT", request);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("Baguette Modifiée", response.getBody().getName());
+        assertEquals(20, response.getBody().getStock());
+        verify(service).updateProduct(1L, request, "merchant-123");
+    }
+
+    @Test
+    void updateProduct_asClient_shouldThrowForbidden() {
+        ProductService service = mock(ProductService.class);
+        ProductController controller = new ProductController(service);
+
+        var request = new com.shoploc.shoploccatalogservice.dto.UpdateProductRequest(
+                "Baguette", "Desc", BigDecimal.valueOf(1.40), 20
+        );
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
+                controller.updateProduct(1L, "user-456", "CLIENT", request)
+        );
+
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        verify(service, never()).updateProduct(any(), any(), any());
+    }
 }
