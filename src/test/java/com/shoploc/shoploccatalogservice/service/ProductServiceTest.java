@@ -64,4 +64,22 @@ class ProductServiceTest {
         assertEquals("merchant-999", result.getMerchantId());
         verify(repository).save(any(Product.class));
     }
+
+    @Test
+    void deleteProduct_shouldSetProductToInactive() {
+        var product = Product.builder()
+                .id(1L)
+                .name("Baguette")
+                .merchantId("merchant-123")
+                .active(true)
+                .build();
+
+        when(repository.findById(1L)).thenReturn(java.util.Optional.of(product));
+        when(repository.save(any(Product.class))).thenReturn(product);
+
+        service.deleteProduct(1L, "merchant-123");
+
+        org.junit.jupiter.api.Assertions.assertFalse(product.getActive());
+        verify(repository).save(product);
+    }
 }

@@ -39,4 +39,8 @@ public class Product {
 
     @Column(name = "merchant_id", nullable = false)
     private String merchantId;
+
+    @Builder.Default
+    @Column(nullable = false)
+    private Boolean active = true;
 }

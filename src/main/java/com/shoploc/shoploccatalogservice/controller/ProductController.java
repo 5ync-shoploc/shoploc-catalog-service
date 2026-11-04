@@ -80,4 +80,22 @@ public class ProductController {
         Product updated = service.updateProduct(id, request, userId);
         return ResponseEntity.ok(updated);
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteProduct(
+            @PathVariable Long id,
+            @RequestHeader(value = "X-User-Id", required = false) String userId,
+            @RequestHeader(value = "X-User-Role", required = false) String userRole
+    ) {
+        if (userId == null || userId.isBlank() || userRole == null || userRole.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentification requise");
+        }
+
+        if (!"COMMERCANT".equalsIgnoreCase(userRole)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Seul le commerçant peut supprimer un article");
+        }
+
+        service.deleteProduct(id, userId);
+        return ResponseEntity.noContent().build();
+    }
 }

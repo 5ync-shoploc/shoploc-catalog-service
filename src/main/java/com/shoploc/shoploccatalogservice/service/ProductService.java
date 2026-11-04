@@ -23,6 +23,10 @@ public class ProductService {
         return repository.findAll(pageable);
     }
 
+    public Page<Product> getMerchantProducts(String merchantId, Pageable pageable) {
+        return repository.findByMerchantId(merchantId, pageable);
+    }
+
     public Product createProduct(CreateProductRequest request, String merchantId) {
         Product product = Product.builder()
                 .name(request.name())
@@ -30,13 +34,10 @@ public class ProductService {
                 .price(request.price())
                 .stock(request.stock())
                 .merchantId(merchantId)
+                .active(true)
                 .build();
 
         return repository.save(product);
-    }
-
-    public Page<Product> getMerchantProducts(String merchantId, Pageable pageable) {
-        return repository.findByMerchantId(merchantId, pageable);
     }
 
     public Product updateProduct(Long productId, UpdateProductRequest request, String merchantId) {
@@ -53,5 +54,17 @@ public class ProductService {
         product.setStock(request.stock());
 
         return repository.save(product);
+    }
+
+    public void deleteProduct(Long productId, String merchantId) {
+        Product product = repository.findById(productId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Article introuvable"));
+
+        if (!product.getMerchantId().equals(merchantId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Vous n'êtes pas autorisé à supprimer cet article");
+        }
+
+        product.setActive(false);
+        repository.save(product);
     }
 }

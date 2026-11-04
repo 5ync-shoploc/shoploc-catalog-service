@@ -178,4 +178,28 @@ class ProductControllerTest {
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
         verify(service, never()).updateProduct(any(), any(), any());
     }
+
+    @Test
+    void deleteProduct_asCommercantOwner_shouldReturnNoContent() {
+        ProductService service = mock(ProductService.class);
+        ProductController controller = new ProductController(service);
+
+        ResponseEntity<Void> response = controller.deleteProduct(1L, "merchant-123", "COMMERCANT");
+
+        assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
+        verify(service).deleteProduct(1L, "merchant-123");
+    }
+
+    @Test
+    void deleteProduct_asClient_shouldThrowForbidden() {
+        ProductService service = mock(ProductService.class);
+        ProductController controller = new ProductController(service);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
+                controller.deleteProduct(1L, "client-456", "CLIENT")
+        );
+
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        verify(service, never()).deleteProduct(any(), any());
+    }
 }
