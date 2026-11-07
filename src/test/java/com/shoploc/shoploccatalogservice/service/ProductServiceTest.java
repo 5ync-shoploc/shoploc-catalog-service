@@ -178,4 +178,40 @@ class ProductServiceTest {
         assertTrue(product.getActive());
         verify(repository, never()).save(any());
     }
+
+    @Test
+    void getProductDetail_shouldReturnAllProductInformation() {
+        var product = Product.builder().id(1L).name("Baguette").description("Tradition")
+                .price(BigDecimal.valueOf(1.20)).stock(5).imageUrl("http://image.url/b.jpg")
+                .merchantId("m1").build();
+        when(repository.findByIdAndActiveTrue(1L)).thenReturn(Optional.of(product));
+
+        PublicProductResponse result = service.getProductDetail(1L);
+
+        assertEquals(1L, result.id());
+        assertEquals("Baguette", result.name());
+        assertEquals("Tradition", result.description());
+        assertEquals(BigDecimal.valueOf(1.20), result.price());
+        assertEquals("http://image.url/b.jpg", result.imageUrl());
+        assertTrue(result.available());
+    }
+
+    @Test
+    void getProductDetail_outOfStock_shouldBeUnavailable() {
+        var product = Product.builder().id(2L).name("Croissant").description("Beurre")
+                .price(BigDecimal.valueOf(1.10)).stock(0).merchantId("m1").build();
+        when(repository.findByIdAndActiveTrue(2L)).thenReturn(Optional.of(product));
+
+        assertFalse(service.getProductDetail(2L).available());
+    }
+
+    @Test
+    void getProductDetail_unknownOrInactiveId_shouldThrowNotFound() {
+        when(repository.findByIdAndActiveTrue(99L)).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
+                service.getProductDetail(99L));
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+    }
 }

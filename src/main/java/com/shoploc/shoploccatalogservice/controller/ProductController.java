@@ -82,4 +82,9 @@ public class ProductController {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, forbiddenMessage);
         }
     }
+
+    @GetMapping("/{id}")
+    public PublicProductResponse getProductDetail(@PathVariable Long id) {
+        return service.getProductDetail(id);
+    }
 }

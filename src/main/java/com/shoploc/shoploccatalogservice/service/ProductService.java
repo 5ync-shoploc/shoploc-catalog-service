@@ -71,4 +71,10 @@ public class ProductService {
         product.setActive(false);
         repository.save(product);
     }
+
+    public PublicProductResponse getProductDetail(Long productId) {
+        return repository.findByIdAndActiveTrue(productId)
+                .map(PublicProductResponse::fromEntity)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Article introuvable"));
+    }
 }

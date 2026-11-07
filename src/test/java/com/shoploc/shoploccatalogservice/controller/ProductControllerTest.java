@@ -219,4 +219,33 @@ class ProductControllerTest {
         assertEquals(HttpStatus.UNAUTHORIZED, ex.getStatusCode());
         verify(service, never()).deleteProduct(any(), any());
     }
+
+    @Test
+    void getProductDetail_shouldReturnProduct() {
+        var response = new PublicProductResponse(
+                1L, "Baguette", "Baguette tradition", BigDecimal.valueOf(1.20),
+                "http://image.url/baguette.jpg", true);
+        when(service.getProductDetail(1L)).thenReturn(response);
+
+        PublicProductResponse result = controller.getProductDetail(1L);
+
+        assertEquals(1L, result.id());
+        assertEquals("Baguette", result.name());
+        assertEquals("Baguette tradition", result.description());
+        assertEquals(BigDecimal.valueOf(1.20), result.price());
+        assertEquals("http://image.url/baguette.jpg", result.imageUrl());
+        assertTrue(result.available());
+        verify(service).getProductDetail(1L);
+    }
+
+    @Test
+    void getProductDetail_unknownId_shouldPropagateNotFound() {
+        when(service.getProductDetail(99L))
+                .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Article introuvable"));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
+                controller.getProductDetail(99L));
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+    }
 }
