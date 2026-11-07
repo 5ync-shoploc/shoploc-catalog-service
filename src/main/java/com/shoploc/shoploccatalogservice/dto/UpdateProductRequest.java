@@ -19,5 +19,7 @@ public record UpdateProductRequest(
 
     @NotNull(message = "Le stock est obligatoire")
     @Min(value = 0, message = "Le stock ne peut pas être négatif")
-    Integer stock
+    Integer stock,
+
+    String imageUrl
 ) {}

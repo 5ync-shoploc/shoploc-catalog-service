@@ -1,6 +1,7 @@
 package com.shoploc.shoploccatalogservice.service;
 
 import com.shoploc.shoploccatalogservice.dto.CreateProductRequest;
+import com.shoploc.shoploccatalogservice.dto.PublicProductResponse;
 import com.shoploc.shoploccatalogservice.dto.UpdateProductRequest;
 import com.shoploc.shoploccatalogservice.entity.Product;
 import com.shoploc.shoploccatalogservice.repository.ProductRepository;
@@ -19,8 +20,9 @@ public class ProductService {
         this.repository = repository;
     }
 
-    public Page<Product> getAll(Pageable pageable) {
-        return repository.findAll(pageable);
+    public Page<PublicProductResponse> getPublicCatalog(Pageable pageable) {
+        return repository.findByActiveTrue(pageable)
+                .map(PublicProductResponse::fromEntity);
     }
 
     public Page<Product> getMerchantProducts(String merchantId, Pageable pageable) {
@@ -33,6 +35,7 @@ public class ProductService {
                 .description(request.description())
                 .price(request.price())
                 .stock(request.stock())
+                .imageUrl(request.imageUrl())
                 .merchantId(merchantId)
                 .active(true)
                 .build();
@@ -52,6 +55,7 @@ public class ProductService {
         product.setDescription(request.description());
         product.setPrice(request.price());
         product.setStock(request.stock());
+        product.setImageUrl(request.imageUrl());
 
         return repository.save(product);
     }

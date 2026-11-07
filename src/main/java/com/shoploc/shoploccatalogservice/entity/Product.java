@@ -43,4 +43,7 @@ public class Product {
     @Builder.Default
     @Column(nullable = false)
     private Boolean active = true;
+
+    @Column(name = "image_url")
+    private String imageUrl;
 }
