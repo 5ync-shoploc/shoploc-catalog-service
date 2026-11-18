@@ -34,9 +34,8 @@ class ProductServiceTest {
     @InjectMocks
     private ProductService service;
 
-
     @Test
-    void getPublicCatalog_shouldReturnMappedActiveProducts() {
+    void getPublicCatalogShouldReturnMappedActiveProducts() {
         var pageable = PageRequest.of(0, 10);
         var inStock = Product.builder().id(1L).name("Baguette").description("Tradition")
                 .price(BigDecimal.valueOf(1.20)).stock(5).merchantId("m1").build();
@@ -54,9 +53,8 @@ class ProductServiceTest {
         verify(repository).findByActiveTrue(pageable);
     }
 
-
     @Test
-    void getMerchantProducts_shouldReturnProductsOfMerchant() {
+    void getMerchantProductsShouldReturnProductsOfMerchant() {
         var pageable = PageRequest.of(0, 10);
         var products = List.of(new Product(), new Product());
         Page<Product> page = new PageImpl<>(products, pageable, 2);
@@ -69,9 +67,8 @@ class ProductServiceTest {
         verify(repository).findByMerchantId("merchant-123", pageable);
     }
 
-
     @Test
-    void createProduct_shouldSaveActiveProductWithMerchantId() {
+    void createProductShouldSaveActiveProductWithMerchantId() {
         var request = new CreateProductRequest("Pain", "Bio", BigDecimal.valueOf(2.50), 15, "http://image.url/pain.jpg");
         when(repository.save(any(Product.class))).thenAnswer(inv -> inv.getArgument(0));
 
@@ -91,9 +88,8 @@ class ProductServiceTest {
         assertEquals("merchant-999", result.getMerchantId());
     }
 
-
     @Test
-    void updateProduct_asOwner_shouldUpdateFieldsAndSave() {
+    void updateProductAsOwnerShouldUpdateFieldsAndSave() {
         var existing = Product.builder().id(1L).name("Old").description("Old desc")
                 .price(BigDecimal.valueOf(1.00)).stock(1).merchantId("merchant-123").build();
         var request = new UpdateProductRequest("Baguette", "Desc", BigDecimal.valueOf(1.40), 20, "http://image.url/b.jpg");
@@ -112,7 +108,7 @@ class ProductServiceTest {
     }
 
     @Test
-    void updateProduct_notFound_shouldThrowNotFound() {
+    void updateProductNotFoundShouldThrowNotFound() {
         var request = new UpdateProductRequest("Baguette", "Desc", BigDecimal.valueOf(1.40), 20, null);
         when(repository.findById(99L)).thenReturn(Optional.empty());
 
@@ -124,7 +120,7 @@ class ProductServiceTest {
     }
 
     @Test
-    void updateProduct_otherMerchant_shouldThrowForbidden() {
+    void updateProductOtherMerchantShouldThrowForbidden() {
         var existing = Product.builder().id(1L).name("Baguette").merchantId("merchant-123").build();
         var request = new UpdateProductRequest("Baguette", "Desc", BigDecimal.valueOf(1.40), 20, null);
         when(repository.findById(1L)).thenReturn(Optional.of(existing));
@@ -136,9 +132,8 @@ class ProductServiceTest {
         verify(repository, never()).save(any());
     }
 
-
     @Test
-    void deleteProduct_asOwner_shouldSetProductToInactive() {
+    void deleteProductAsOwnerShouldSetProductToInactive() {
         var product = Product.builder()
                 .id(1L)
                 .name("Baguette")
@@ -156,7 +151,7 @@ class ProductServiceTest {
     }
 
     @Test
-    void deleteProduct_notFound_shouldThrowNotFound() {
+    void deleteProductNotFoundShouldThrowNotFound() {
         when(repository.findById(99L)).thenReturn(Optional.empty());
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
@@ -167,7 +162,7 @@ class ProductServiceTest {
     }
 
     @Test
-    void deleteProduct_otherMerchant_shouldThrowForbidden() {
+    void deleteProductOtherMerchantShouldThrowForbidden() {
         var product = Product.builder().id(1L).name("Baguette").merchantId("merchant-123").active(true).build();
         when(repository.findById(1L)).thenReturn(Optional.of(product));
 
@@ -180,7 +175,7 @@ class ProductServiceTest {
     }
 
     @Test
-    void getProductDetail_shouldReturnAllProductInformation() {
+    void getProductDetailShouldReturnAllProductInformation() {
         var product = Product.builder().id(1L).name("Baguette").description("Tradition")
                 .price(BigDecimal.valueOf(1.20)).stock(5).imageUrl("http://image.url/b.jpg")
                 .merchantId("m1").build();
@@ -197,7 +192,7 @@ class ProductServiceTest {
     }
 
     @Test
-    void getProductDetail_outOfStock_shouldBeUnavailable() {
+    void getProductDetailOutOfStockShouldBeUnavailable() {
         var product = Product.builder().id(2L).name("Croissant").description("Beurre")
                 .price(BigDecimal.valueOf(1.10)).stock(0).merchantId("m1").build();
         when(repository.findByIdAndActiveTrue(2L)).thenReturn(Optional.of(product));
@@ -206,7 +201,7 @@ class ProductServiceTest {
     }
 
     @Test
-    void getProductDetail_unknownOrInactiveId_shouldThrowNotFound() {
+    void getProductDetailUnknownOrInactiveIdShouldThrowNotFound() {
         when(repository.findByIdAndActiveTrue(99L)).thenReturn(Optional.empty());
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->

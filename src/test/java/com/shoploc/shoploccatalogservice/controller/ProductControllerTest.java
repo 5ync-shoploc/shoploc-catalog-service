@@ -34,9 +34,8 @@ class ProductControllerTest {
         pageable = PageRequest.of(0, 10);
     }
 
-
     @Test
-    void getPublicCatalog_shouldReturnActiveProductsPage() {
+    void getPublicCatalogShouldReturnActiveProductsPage() {
         var publicProduct = new PublicProductResponse(
                 1L,
                 "Baguette",
@@ -57,9 +56,8 @@ class ProductControllerTest {
         verify(service).getPublicCatalog(pageable);
     }
 
-
     @Test
-    void getMyProducts_asCommercant_shouldReturnOnlyMerchantProducts() {
+    void getMyProductsAsCommercantShouldReturnOnlyMerchantProducts() {
         var product = Product.builder()
                 .id(1L)
                 .name("Baguette")
@@ -79,7 +77,7 @@ class ProductControllerTest {
     }
 
     @Test
-    void getMyProducts_asClient_shouldThrowForbidden() {
+    void getMyProductsAsClientShouldThrowForbidden() {
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
                 controller.getMyProducts("client-456", "CLIENT", pageable)
         );
@@ -89,7 +87,7 @@ class ProductControllerTest {
     }
 
     @Test
-    void getMyProducts_withoutHeaders_shouldThrowUnauthorized() {
+    void getMyProductsWithoutHeadersShouldThrowUnauthorized() {
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
                 controller.getMyProducts(null, null, pageable)
         );
@@ -98,9 +96,8 @@ class ProductControllerTest {
         verify(service, never()).getMerchantProducts(any(), any());
     }
 
-
     @Test
-    void createProduct_asCommercant_shouldReturnCreated() {
+    void createProductAsCommercantShouldReturnCreated() {
         var request = new CreateProductRequest("Baguette", "Desc", BigDecimal.valueOf(1.20), 30, "http://image.url/baguette.jpg");
         var createdProduct = Product.builder()
                 .id(1L)
@@ -122,7 +119,7 @@ class ProductControllerTest {
     }
 
     @Test
-    void createProduct_asClient_shouldThrowForbidden() {
+    void createProductAsClientShouldThrowForbidden() {
         var request = new CreateProductRequest("Baguette", "Desc", BigDecimal.valueOf(1.20), 30, "http://image.url/baguette.jpg");
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
@@ -134,7 +131,7 @@ class ProductControllerTest {
     }
 
     @Test
-    void createProduct_withoutHeaders_shouldThrowUnauthorized() {
+    void createProductWithoutHeadersShouldThrowUnauthorized() {
         var request = new CreateProductRequest("Baguette", "Desc", BigDecimal.valueOf(1.20), 30, "http://image.url/baguette.jpg");
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
@@ -145,9 +142,8 @@ class ProductControllerTest {
         verify(service, never()).createProduct(any(), any());
     }
 
-
     @Test
-    void updateProduct_asCommercantOwner_shouldReturnUpdatedProduct() {
+    void updateProductAsCommercantOwnerShouldReturnUpdatedProduct() {
         var request = new UpdateProductRequest("Baguette", "Desc", BigDecimal.valueOf(1.40), 20, "http://image.url/baguette.jpg");
         var updatedProduct = Product.builder()
                 .id(1L)
@@ -168,7 +164,7 @@ class ProductControllerTest {
     }
 
     @Test
-    void updateProduct_asClient_shouldThrowForbidden() {
+    void updateProductAsClientShouldThrowForbidden() {
         var request = new UpdateProductRequest("Baguette", "Desc", BigDecimal.valueOf(1.40), 20, "http://image.url/baguette.jpg");
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
@@ -180,7 +176,7 @@ class ProductControllerTest {
     }
 
     @Test
-    void updateProduct_withoutHeaders_shouldThrowUnauthorized() {
+    void updateProductWithoutHeadersShouldThrowUnauthorized() {
         var request = new UpdateProductRequest("Baguette", "Desc", BigDecimal.valueOf(1.40), 20, "http://image.url/baguette.jpg");
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
@@ -191,9 +187,8 @@ class ProductControllerTest {
         verify(service, never()).updateProduct(any(), any(), any());
     }
 
-
     @Test
-    void deleteProduct_asCommercantOwner_shouldReturnNoContent() {
+    void deleteProductAsCommercantOwnerShouldReturnNoContent() {
         ResponseEntity<Void> response = controller.deleteProduct(1L, "merchant-123", "COMMERCANT");
 
         assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
@@ -201,7 +196,7 @@ class ProductControllerTest {
     }
 
     @Test
-    void deleteProduct_asClient_shouldThrowForbidden() {
+    void deleteProductAsClientShouldThrowForbidden() {
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
                 controller.deleteProduct(1L, "client-456", "CLIENT")
         );
@@ -211,7 +206,7 @@ class ProductControllerTest {
     }
 
     @Test
-    void deleteProduct_withoutHeaders_shouldThrowUnauthorized() {
+    void deleteProductWithoutHeadersShouldThrowUnauthorized() {
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
                 controller.deleteProduct(1L, null, null)
         );
@@ -221,7 +216,7 @@ class ProductControllerTest {
     }
 
     @Test
-    void getProductDetail_shouldReturnProduct() {
+    void getProductDetailShouldReturnProduct() {
         var response = new PublicProductResponse(
                 1L, "Baguette", "Baguette tradition", BigDecimal.valueOf(1.20),
                 "http://image.url/baguette.jpg", true);
@@ -239,7 +234,7 @@ class ProductControllerTest {
     }
 
     @Test
-    void getProductDetail_unknownId_shouldPropagateNotFound() {
+    void getProductDetailUnknownIdShouldPropagateNotFound() {
         when(service.getProductDetail(99L))
                 .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Article introuvable"));
 
