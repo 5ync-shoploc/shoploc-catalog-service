@@ -1,0 +1,1 @@
+public interface CommerceRepository extends JpaRepository<Commerce, Long> {}
