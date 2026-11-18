@@ -1,49 +1,41 @@
-package com.shoploc.shoploccatalogservice.entity;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import java.math.BigDecimal;
-
 @Entity
-@Table(name = "products")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Table(name = "produit", schema = "catalog")
+@Data @NoArgsConstructor @AllArgsConstructor @Builder
 public class Product {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id_produit")
     private Long id;
 
-    @Column(nullable = false)
+    @Column(name = "nom", nullable = false)
     private String name;
 
-    @Column(nullable = false, length = 1000)
+    @Column(name = "description", nullable = false, length = 1000)
     private String description;
 
-    @Column(nullable = false)
+    @Column(name = "prix_unitaire", nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
 
-    @Column(nullable = false)
+    @Column(name = "stock", nullable = false)
     private Integer stock;
 
-    @Column(name = "merchant_id", nullable = false)
-    private String merchantId;
+    @Builder.Default
+    @Column(name = "seuil_alerte", nullable = false)
+    private Integer alertThreshold = 0;
+
+    @Column(name = "photo_url")
+    private String imageUrl;
 
     @Builder.Default
-    @Column(nullable = false)
+    @Column(name = "actif", nullable = false)
     private Boolean active = true;
 
-    @Column(name = "image_url")
-    private String imageUrl;
+    @ManyToOne(optional = false, fetch = FetchType.EAGER)
+    @JoinColumn(name = "id_commerce", nullable = false)
+    private Commerce commerce;
+
+    @ManyToOne(optional = false, fetch = FetchType.EAGER)
+    @JoinColumn(name = "id_categorie", nullable = false)
+    private Category category;
 }

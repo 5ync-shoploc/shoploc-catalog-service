@@ -21,5 +21,7 @@ public record UpdateProductRequest(
     @Min(value = 0, message = "Le stock ne peut pas être négatif")
     Integer stock,
 
-    String imageUrl
+    String imageUrl,
+    @Min(0) Integer alertThreshold,
+    Long categoryId
 ) {}

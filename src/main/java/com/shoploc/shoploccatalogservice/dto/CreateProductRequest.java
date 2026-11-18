@@ -7,19 +7,12 @@ import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 
 public record CreateProductRequest(
-    @NotBlank(message = "Le nom de l'article est obligatoire")
-    String name,
-
-    @NotBlank(message = "La description est obligatoire")
-    String description,
-
-    @NotNull(message = "Le prix unitaire est obligatoire")
-    @DecimalMin(value = "0.01", message = "Le prix doit être supérieur à 0")
-    BigDecimal price,
-
-    @NotNull(message = "Le stock est obligatoire")
-    @Min(value = 0, message = "Le stock ne peut pas être négatif")
-    Integer stock,
-
-    String imageUrl
+    @NotBlank(message = "Le nom de l'article est obligatoire") String name,
+    @NotBlank(message = "La description est obligatoire") String description,
+    @NotNull @DecimalMin(value = "0.01", message = "Le prix doit être supérieur à 0") BigDecimal price,
+    @NotNull @Min(value = 0, message = "Le stock ne peut pas être négatif") Integer stock,
+    String imageUrl,
+    @Min(value = 0, message = "Le seuil d'alerte ne peut pas être négatif") Integer alertThreshold,
+    @NotNull(message = "Le commerce est obligatoire") Long commerceId,
+    @NotNull(message = "La catégorie est obligatoire") Long categoryId
 ) {}

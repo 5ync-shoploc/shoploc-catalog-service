@@ -4,21 +4,14 @@ import com.shoploc.shoploccatalogservice.entity.Product;
 import java.math.BigDecimal;
 
 public record PublicProductResponse(
-    Long id,
-    String name,
-    String description,
-    BigDecimal price,
-    String imageUrl,
-    boolean available
+    Long id, String name, String description, BigDecimal price, String imageUrl,
+    boolean available, Long commerceId, Long categoryId
 ) {
-    public static PublicProductResponse fromEntity(Product product) {
+    public static PublicProductResponse fromEntity(Product p) {
         return new PublicProductResponse(
-            product.getId(),
-            product.getName(),
-            product.getDescription(),
-            product.getPrice(),
-            product.getImageUrl(),
-            product.getStock() != null && product.getStock() > 0
-        );
+            p.getId(), p.getName(), p.getDescription(), p.getPrice(), p.getImageUrl(),
+            p.getStock() != null && p.getStock() > 0,
+            p.getCommerce() != null ? p.getCommerce().getId() : null,
+            p.getCategory() != null ? p.getCategory().getId() : null);
     }
 }
