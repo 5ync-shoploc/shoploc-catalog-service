@@ -1,6 +1,17 @@
+package com.shoploc.shoploccatalogservice.entity;
+
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.time.DayOfWeek;
+import java.time.LocalTime;
+
 @Entity
 @Table(name = "horaire", schema = "catalog")
-@Data @NoArgsConstructor @AllArgsConstructor @Builder
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class OpeningHour {
 
     @Id
@@ -10,10 +21,10 @@ public class OpeningHour {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "jour", nullable = false)
-    private DayOfWeek day;                    
+    private DayOfWeek day;
 
     @Column(name = "heure_ouverture", nullable = false)
-    private LocalTime openingTime;            
+    private LocalTime openingTime;
 
     @Column(name = "heure_fermeture", nullable = false)
     private LocalTime closingTime;

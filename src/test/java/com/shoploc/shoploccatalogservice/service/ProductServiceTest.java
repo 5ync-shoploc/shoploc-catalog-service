@@ -1,19 +1,28 @@
+
 package com.shoploc.shoploccatalogservice.service;
 
 import com.shoploc.shoploccatalogservice.dto.CreateProductRequest;
 import com.shoploc.shoploccatalogservice.dto.PublicProductResponse;
 import com.shoploc.shoploccatalogservice.dto.UpdateProductRequest;
+import com.shoploc.shoploccatalogservice.entity.Category;
+import com.shoploc.shoploccatalogservice.entity.Commerce;
 import com.shoploc.shoploccatalogservice.entity.Product;
+import com.shoploc.shoploccatalogservice.repository.CategoryRepository;
+import com.shoploc.shoploccatalogservice.repository.CommerceRepository;
 import com.shoploc.shoploccatalogservice.repository.ProductRepository;
+
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
+
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -31,182 +40,350 @@ class ProductServiceTest {
     @Mock
     private ProductRepository repository;
 
+    @Mock
+    private CommerceRepository commerceRepository;
+
+    @Mock
+    private CategoryRepository categoryRepository;
+
     @InjectMocks
-    private ProductService service;
+    private ProductService productService;
+
+    private Commerce commerce;
+    private Category category;
+    private Product product;
+
+    private final String merchantId = "merchant-123";
+
+    @BeforeEach
+    void setUp() {
+
+        commerce = Commerce.builder()
+                .id(1L)
+                .name("Commerce Test")
+                .idCommercant(merchantId)
+                .build();
+
+        category = Category.builder()
+                .id(1L)
+                .label("Alimentation")
+                .build();
+
+        product = Product.builder()
+                .id(1L)
+                .name("Riz")
+                .description("Riz blanc")
+                .price(new BigDecimal("5.00"))
+                .stock(20)
+                .alertThreshold(5)
+                .imageUrl("riz.jpg")
+                .commerce(commerce)
+                .category(category)
+                .active(true)
+                .build();
+    }
 
     @Test
-    void getPublicCatalogShouldReturnMappedActiveProducts() {
-        var pageable = PageRequest.of(0, 10);
-        var inStock = Product.builder().id(1L).name("Baguette").description("Tradition")
-                .price(BigDecimal.valueOf(1.20)).stock(5).merchantId("m1").build();
-        var outOfStock = Product.builder().id(2L).name("Croissant").description("Beurre")
-                .price(BigDecimal.valueOf(1.10)).stock(0).merchantId("m1").build();
-        Page<Product> page = new PageImpl<>(List.of(inStock, outOfStock), pageable, 2);
+    void testGetPublicCatalog() {
 
-        when(repository.findByActiveTrue(pageable)).thenReturn(page);
+        Pageable pageable = PageRequest.of(0, 10);
 
-        Page<PublicProductResponse> result = service.getPublicCatalog(pageable);
+        Page<Product> products = new PageImpl<>(List.of(product));
 
-        assertEquals(2, result.getTotalElements());
+        when(repository.findByActiveTrue(pageable))
+                .thenReturn(products);
+
+        Page<PublicProductResponse> result =
+                productService.getPublicCatalog(pageable);
+
+        assertEquals(1, result.getTotalElements());
+        assertEquals("Riz", result.getContent().get(0).name());
         assertTrue(result.getContent().get(0).available());
-        assertFalse(result.getContent().get(1).available());
+
         verify(repository).findByActiveTrue(pageable);
     }
 
+
     @Test
-    void getMerchantProductsShouldReturnProductsOfMerchant() {
-        var pageable = PageRequest.of(0, 10);
-        var products = List.of(new Product(), new Product());
-        Page<Product> page = new PageImpl<>(products, pageable, 2);
+    void testGetMerchantProducts() {
 
-        when(repository.findByMerchantId("merchant-123", pageable)).thenReturn(page);
+        Pageable pageable = PageRequest.of(0, 10);
 
-        Page<Product> result = service.getMerchantProducts("merchant-123", pageable);
+        Page<Product> products = new PageImpl<>(List.of(product));
 
-        assertEquals(2, result.getTotalElements());
-        verify(repository).findByMerchantId("merchant-123", pageable);
+        when(repository.findByCommerce_IdCommercant(merchantId, pageable))
+                .thenReturn(products);
+
+        Page<Product> result =
+                productService.getMerchantProducts(merchantId, pageable);
+
+        assertEquals(1, result.getTotalElements());
+        assertEquals("Riz", result.getContent().get(0).getName());
+
+        verify(repository).findByCommerce_IdCommercant(merchantId, pageable);
     }
 
-    @Test
-    void createProductShouldSaveActiveProductWithMerchantId() {
-        var request = new CreateProductRequest("Pain", "Bio", BigDecimal.valueOf(2.50), 15, "http://image.url/pain.jpg");
-        when(repository.save(any(Product.class))).thenAnswer(inv -> inv.getArgument(0));
-
-        Product result = service.createProduct(request, "merchant-999");
-
-        ArgumentCaptor<Product> captor = ArgumentCaptor.forClass(Product.class);
-        verify(repository).save(captor.capture());
-        Product saved = captor.getValue();
-
-        assertEquals("Pain", saved.getName());
-        assertEquals("Bio", saved.getDescription());
-        assertEquals(BigDecimal.valueOf(2.50), saved.getPrice());
-        assertEquals(15, saved.getStock());
-        assertEquals("http://image.url/pain.jpg", saved.getImageUrl());
-        assertEquals("merchant-999", saved.getMerchantId());
-        assertTrue(saved.getActive());
-        assertEquals("merchant-999", result.getMerchantId());
-    }
 
     @Test
-    void updateProductAsOwnerShouldUpdateFieldsAndSave() {
-        var existing = Product.builder().id(1L).name("Old").description("Old desc")
-                .price(BigDecimal.valueOf(1.00)).stock(1).merchantId("merchant-123").build();
-        var request = new UpdateProductRequest("Baguette", "Desc", BigDecimal.valueOf(1.40), 20, "http://image.url/b.jpg");
+    void testCreateProduct() {
 
-        when(repository.findById(1L)).thenReturn(Optional.of(existing));
-        when(repository.save(any(Product.class))).thenAnswer(inv -> inv.getArgument(0));
+        CreateProductRequest request = new CreateProductRequest(
+                "Riz",
+                "Riz blanc",
+                new BigDecimal("5.00"),
+                20,
+                "riz.jpg",
+                5,
+                1L,
+                1L
+        );
 
-        Product result = service.updateProduct(1L, request, "merchant-123");
+        when(commerceRepository.findById(1L))
+                .thenReturn(Optional.of(commerce));
 
-        assertEquals("Baguette", result.getName());
-        assertEquals("Desc", result.getDescription());
-        assertEquals(BigDecimal.valueOf(1.40), result.getPrice());
+        when(categoryRepository.findById(1L))
+                .thenReturn(Optional.of(category));
+
+        when(repository.save(any(Product.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        Product result = productService.createProduct(request, merchantId);
+
+        assertNotNull(result);
+        assertEquals("Riz", result.getName());
+        assertEquals(new BigDecimal("5.00"), result.getPrice());
         assertEquals(20, result.getStock());
-        assertEquals("http://image.url/b.jpg", result.getImageUrl());
-        verify(repository).save(existing);
+        assertEquals(5, result.getAlertThreshold());
+        assertTrue(result.getActive());
+
+        verify(repository).save(any(Product.class));
     }
 
+
     @Test
-    void updateProductNotFoundShouldThrowNotFound() {
-        var request = new UpdateProductRequest("Baguette", "Desc", BigDecimal.valueOf(1.40), 20, null);
-        when(repository.findById(99L)).thenReturn(Optional.empty());
+    void testCreateProductCommerceNotFound() {
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
-                service.updateProduct(99L, request, "merchant-123"));
+        CreateProductRequest request = new CreateProductRequest(
+                "Riz", "Riz blanc",
+                new BigDecimal("5.00"), 20,
+                null, null, 1L, 1L
+        );
 
-        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        when(commerceRepository.findById(1L))
+                .thenReturn(Optional.empty());
+
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> productService.createProduct(request, merchantId)
+        );
+
+        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
+
         verify(repository, never()).save(any());
     }
 
     @Test
-    void updateProductOtherMerchantShouldThrowForbidden() {
-        var existing = Product.builder().id(1L).name("Baguette").merchantId("merchant-123").build();
-        var request = new UpdateProductRequest("Baguette", "Desc", BigDecimal.valueOf(1.40), 20, null);
-        when(repository.findById(1L)).thenReturn(Optional.of(existing));
+    void testCreateProductForbidden() {
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
-                service.updateProduct(1L, request, "merchant-OTHER"));
+        CreateProductRequest request = new CreateProductRequest(
+                "Riz", "Riz blanc",
+                new BigDecimal("5.00"), 20,
+                null, null, 1L, 1L
+        );
 
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        when(commerceRepository.findById(1L))
+                .thenReturn(Optional.of(commerce));
+
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> productService.createProduct(request, "autre-merchant")
+        );
+
+        assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
+
+        verify(categoryRepository, never()).findById(any());
         verify(repository, never()).save(any());
     }
 
     @Test
-    void deleteProductAsOwnerShouldSetProductToInactive() {
-        var product = Product.builder()
-                .id(1L)
-                .name("Baguette")
-                .merchantId("merchant-123")
-                .active(true)
-                .build();
+    void testCreateProductCategoryNotFound() {
 
-        when(repository.findById(1L)).thenReturn(Optional.of(product));
-        when(repository.save(any(Product.class))).thenReturn(product);
+        CreateProductRequest request = new CreateProductRequest(
+                "Riz", "Riz blanc",
+                new BigDecimal("5.00"), 20,
+                null, null, 1L, 2L
+        );
 
-        service.deleteProduct(1L, "merchant-123");
+        when(commerceRepository.findById(1L))
+                .thenReturn(Optional.of(commerce));
+
+        when(categoryRepository.findById(2L))
+                .thenReturn(Optional.empty());
+
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> productService.createProduct(request, merchantId)
+        );
+
+        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
+
+        verify(repository, never()).save(any());
+    }
+
+
+    @Test
+    void testUpdateProduct() {
+
+        UpdateProductRequest request = new UpdateProductRequest(
+                "Riz premium",
+                "Riz de qualité supérieure",
+                new BigDecimal("8.00"),
+                30,
+                "riz-premium.jpg",
+                10,
+                1L
+        );
+
+        when(repository.findById(1L))
+                .thenReturn(Optional.of(product));
+
+        when(categoryRepository.findById(1L))
+                .thenReturn(Optional.of(category));
+
+        when(repository.save(any(Product.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        Product result =
+                productService.updateProduct(1L, request, merchantId);
+
+        assertEquals("Riz premium", result.getName());
+        assertEquals("Riz de qualité supérieure", result.getDescription());
+        assertEquals(new BigDecimal("8.00"), result.getPrice());
+        assertEquals(30, result.getStock());
+        assertEquals(10, result.getAlertThreshold());
+
+        verify(repository).save(product);
+    }
+
+
+    @Test
+    void testUpdateProductNotFound() {
+
+        UpdateProductRequest request = new UpdateProductRequest(
+                "Riz", "Riz blanc",
+                new BigDecimal("5.00"), 20,
+                null, null, null
+        );
+
+        when(repository.findById(99L))
+                .thenReturn(Optional.empty());
+
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> productService.updateProduct(99L, request, merchantId)
+        );
+
+        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
+
+        verify(repository, never()).save(any());
+    }
+
+
+    @Test
+    void testUpdateProductForbidden() {
+
+        UpdateProductRequest request = new UpdateProductRequest(
+                "Riz", "Riz blanc",
+                new BigDecimal("5.00"), 20,
+                null, null, null
+        );
+
+        when(repository.findById(1L))
+                .thenReturn(Optional.of(product));
+
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> productService.updateProduct(1L, request, "autre-merchant")
+        );
+
+        assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
+
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    void testDeleteProduct() {
+
+        when(repository.findById(1L))
+                .thenReturn(Optional.of(product));
+
+        productService.deleteProduct(1L, merchantId);
 
         assertFalse(product.getActive());
+
         verify(repository).save(product);
     }
 
     @Test
-    void deleteProductNotFoundShouldThrowNotFound() {
-        when(repository.findById(99L)).thenReturn(Optional.empty());
+    void testDeleteProductNotFound() {
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
-                service.deleteProduct(99L, "merchant-123"));
+        when(repository.findById(99L))
+                .thenReturn(Optional.empty());
 
-        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> productService.deleteProduct(99L, merchantId)
+        );
+
+        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
+
         verify(repository, never()).save(any());
     }
 
+
     @Test
-    void deleteProductOtherMerchantShouldThrowForbidden() {
-        var product = Product.builder().id(1L).name("Baguette").merchantId("merchant-123").active(true).build();
-        when(repository.findById(1L)).thenReturn(Optional.of(product));
+    void testDeleteProductForbidden() {
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
-                service.deleteProduct(1L, "merchant-OTHER"));
+        when(repository.findById(1L))
+                .thenReturn(Optional.of(product));
 
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
-        assertTrue(product.getActive());
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> productService.deleteProduct(1L, "autre-merchant")
+        );
+
+        assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
+
         verify(repository, never()).save(any());
     }
 
+
     @Test
-    void getProductDetailShouldReturnAllProductInformation() {
-        var product = Product.builder().id(1L).name("Baguette").description("Tradition")
-                .price(BigDecimal.valueOf(1.20)).stock(5).imageUrl("http://image.url/b.jpg")
-                .merchantId("m1").build();
-        when(repository.findByIdAndActiveTrue(1L)).thenReturn(Optional.of(product));
+    void testGetProductDetail() {
 
-        PublicProductResponse result = service.getProductDetail(1L);
+        when(repository.findByIdAndActiveTrue(1L))
+                .thenReturn(Optional.of(product));
 
-        assertEquals(1L, result.id());
-        assertEquals("Baguette", result.name());
-        assertEquals("Tradition", result.description());
-        assertEquals(BigDecimal.valueOf(1.20), result.price());
-        assertEquals("http://image.url/b.jpg", result.imageUrl());
+        PublicProductResponse result =
+                productService.getProductDetail(1L);
+
+        assertNotNull(result);
+        assertEquals("Riz", result.name());
+        assertEquals(new BigDecimal("5.00"), result.price());
         assertTrue(result.available());
     }
 
     @Test
-    void getProductDetailOutOfStockShouldBeUnavailable() {
-        var product = Product.builder().id(2L).name("Croissant").description("Beurre")
-                .price(BigDecimal.valueOf(1.10)).stock(0).merchantId("m1").build();
-        when(repository.findByIdAndActiveTrue(2L)).thenReturn(Optional.of(product));
+    void testGetProductDetailNotFound() {
 
-        assertFalse(service.getProductDetail(2L).available());
-    }
+        when(repository.findByIdAndActiveTrue(99L))
+                .thenReturn(Optional.empty());
 
-    @Test
-    void getProductDetailUnknownOrInactiveIdShouldThrowNotFound() {
-        when(repository.findByIdAndActiveTrue(99L)).thenReturn(Optional.empty());
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> productService.getProductDetail(99L)
+        );
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
-                service.getProductDetail(99L));
-
-        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
     }
 }

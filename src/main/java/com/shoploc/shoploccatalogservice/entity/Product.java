@@ -1,6 +1,16 @@
+package com.shoploc.shoploccatalogservice.entity;
+
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.math.BigDecimal;
+
 @Entity
 @Table(name = "produit", schema = "catalog")
-@Data @NoArgsConstructor @AllArgsConstructor @Builder
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Product {
 
     @Id

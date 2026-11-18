@@ -14,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.server.ResponseStatusException;
+import com.shoploc.shoploccatalogservice.entity.Commerce;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -34,6 +35,10 @@ class ProductControllerTest {
         pageable = PageRequest.of(0, 10);
     }
 
+    private static Commerce commerceOf(String idCommercant) {
+        return Commerce.builder().id(10L).idCommercant(idCommercant).build();
+    }
+
     @Test
     void getPublicCatalogShouldReturnActiveProductsPage() {
         var publicProduct = new PublicProductResponse(
@@ -42,7 +47,7 @@ class ProductControllerTest {
                 "Baguette tradition",
                 BigDecimal.valueOf(1.20),
                 "http://image.url/baguette.jpg",
-                true
+                true, 10L, 1L
         );
 
         Page<PublicProductResponse> expectedPage = new PageImpl<>(List.of(publicProduct), pageable, 1);
@@ -62,7 +67,7 @@ class ProductControllerTest {
                 .id(1L)
                 .name("Baguette")
                 .stock(30)
-                .merchantId("merchant-123")
+                .commerce(commerceOf("merchant-123"))
                 .build();
 
         Page<Product> expectedPage = new PageImpl<>(List.of(product), pageable, 1);
@@ -98,13 +103,13 @@ class ProductControllerTest {
 
     @Test
     void createProductAsCommercantShouldReturnCreated() {
-        var request = new CreateProductRequest("Baguette", "Desc", BigDecimal.valueOf(1.20), 30, "http://image.url/baguette.jpg");
+        var request = new CreateProductRequest("Baguette", "Desc", BigDecimal.valueOf(1.20), 30, "http://image.url/baguette.jpg", 5, 10L, 1L);
         var createdProduct = Product.builder()
                 .id(1L)
                 .name("Baguette")
                 .price(BigDecimal.valueOf(1.20))
                 .stock(30)
-                .merchantId("merchant-123")
+                .commerce(commerceOf("merchant-123"))
                 .active(true)
                 .build();
 
@@ -120,7 +125,7 @@ class ProductControllerTest {
 
     @Test
     void createProductAsClientShouldThrowForbidden() {
-        var request = new CreateProductRequest("Baguette", "Desc", BigDecimal.valueOf(1.20), 30, "http://image.url/baguette.jpg");
+        var request = new CreateProductRequest("Baguette", "Desc", BigDecimal.valueOf(1.20), 30, "http://image.url/baguette.jpg", 5, 10L, 1L);
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
                 controller.createProduct("client-456", "CLIENT", request)
@@ -132,7 +137,7 @@ class ProductControllerTest {
 
     @Test
     void createProductWithoutHeadersShouldThrowUnauthorized() {
-        var request = new CreateProductRequest("Baguette", "Desc", BigDecimal.valueOf(1.20), 30, "http://image.url/baguette.jpg");
+        var request = new CreateProductRequest("Baguette", "Desc", BigDecimal.valueOf(1.20), 30, "http://image.url/baguette.jpg", 5, 10L, 1L);
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
                 controller.createProduct(null, null, request)
@@ -144,13 +149,13 @@ class ProductControllerTest {
 
     @Test
     void updateProductAsCommercantOwnerShouldReturnUpdatedProduct() {
-        var request = new UpdateProductRequest("Baguette", "Desc", BigDecimal.valueOf(1.40), 20, "http://image.url/baguette.jpg");
+        var request = new UpdateProductRequest("Baguette", "Desc", BigDecimal.valueOf(1.40), 20, "http://image.url/baguette.jpg", 5, null);
         var updatedProduct = Product.builder()
                 .id(1L)
                 .name("Baguette")
                 .price(BigDecimal.valueOf(1.40))
                 .stock(20)
-                .merchantId("merchant-123")
+                .commerce(commerceOf("merchant-123"))
                 .build();
 
         when(service.updateProduct(1L, request, "merchant-123")).thenReturn(updatedProduct);
@@ -165,7 +170,7 @@ class ProductControllerTest {
 
     @Test
     void updateProductAsClientShouldThrowForbidden() {
-        var request = new UpdateProductRequest("Baguette", "Desc", BigDecimal.valueOf(1.40), 20, "http://image.url/baguette.jpg");
+        var request = new UpdateProductRequest("Baguette", "Desc", BigDecimal.valueOf(1.40), 20, "http://image.url/baguette.jpg", 5, null);
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
                 controller.updateProduct(1L, "client-456", "CLIENT", request)
@@ -177,7 +182,7 @@ class ProductControllerTest {
 
     @Test
     void updateProductWithoutHeadersShouldThrowUnauthorized() {
-        var request = new UpdateProductRequest("Baguette", "Desc", BigDecimal.valueOf(1.40), 20, "http://image.url/baguette.jpg");
+        var request = new UpdateProductRequest("Baguette", "Desc", BigDecimal.valueOf(1.40), 20, "http://image.url/baguette.jpg", 5, null);
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
                 controller.updateProduct(1L, null, null, request)
@@ -219,7 +224,7 @@ class ProductControllerTest {
     void getProductDetailShouldReturnProduct() {
         var response = new PublicProductResponse(
                 1L, "Baguette", "Baguette tradition", BigDecimal.valueOf(1.20),
-                "http://image.url/baguette.jpg", true);
+                "http://image.url/baguette.jpg", true, 10L, 1L);
         when(service.getProductDetail(1L)).thenReturn(response);
 
         PublicProductResponse result = controller.getProductDetail(1L);

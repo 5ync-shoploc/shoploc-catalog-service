@@ -1,6 +1,14 @@
+package com.shoploc.shoploccatalogservice.entity;
+
+import jakarta.persistence.*;
+import lombok.*;
+
 @Entity
 @Table(name = "commerce", schema = "catalog")
-@Data @NoArgsConstructor @AllArgsConstructor @Builder
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Commerce {
 
     @Id
@@ -20,7 +28,7 @@ public class Commerce {
     @Builder.Default
     @Column(name = "actif", nullable = false)
     private Boolean active = true;
-
+    
     @Column(name = "id_commercant", nullable = false, length = 64)
     private String idCommercant;
 }
