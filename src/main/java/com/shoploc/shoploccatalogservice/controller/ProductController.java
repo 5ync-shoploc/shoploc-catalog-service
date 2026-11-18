@@ -1,4 +1,4 @@
-﻿package com.shoploc.shoploccatalogservice.controller;
+package com.shoploc.shoploccatalogservice.controller;
 
 import com.shoploc.shoploccatalogservice.dto.CreateProductRequest;
 import com.shoploc.shoploccatalogservice.dto.InternalProductResponse;
