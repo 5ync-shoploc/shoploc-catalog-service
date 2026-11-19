@@ -1,7 +1,9 @@
 package com.shoploc.shoploccatalogservice.controller;
 
 import com.shoploc.shoploccatalogservice.dto.CreateProductRequest;
+import com.shoploc.shoploccatalogservice.dto.InternalProductResponse;
 import com.shoploc.shoploccatalogservice.dto.PublicProductResponse;
+import com.shoploc.shoploccatalogservice.dto.StockDecrementRequest;
 import com.shoploc.shoploccatalogservice.dto.UpdateProductRequest;
 import com.shoploc.shoploccatalogservice.entity.Product;
 import com.shoploc.shoploccatalogservice.service.ProductService;
@@ -86,5 +88,16 @@ public class ProductController {
     @GetMapping("/{id}")
     public PublicProductResponse getProductDetail(@PathVariable Long id) {
         return service.getProductDetail(id);
+    }
+
+    @GetMapping("/{id}/internal")
+    public InternalProductResponse getProductInternal(@PathVariable Long id) {
+        return service.getInternalProduct(id);
+    }
+
+    @PostMapping("/stock/decrement")
+    public ResponseEntity<Void> decrementStock(@Valid @RequestBody StockDecrementRequest request) {
+        service.decrementStock(request);
+        return ResponseEntity.noContent().build();
     }
 }
