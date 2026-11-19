@@ -1,0 +1,8 @@
+spring:
+  application:
+    name: shoploc-catalog-service
+  config:
+    import: optional:configserver:http://localhost:8888
+  jpa:
+    properties:
+      jakarta.persistence.create-database-schemas: true
